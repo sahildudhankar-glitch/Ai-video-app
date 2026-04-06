@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<title>AI Studio Pro | Premium</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+/* root aur style... */
+:root { --bg-dark: #0f172a; --card-bg: #1e293b; --primary: #8b5cf6; --secondary: #ec4899; --success: #10b981; --text-main: #f8fafc; --text-muted: #94a3b8; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+body { background-color: var(--bg-dark); color: var(--text-main); overflow-x: hidden; }
+::-webkit-scrollbar { display: none; }
+
+/* App Layout */
+#appContainer { display: none; padding-bottom: 90px; }
+
+/* Login */
+#loginPage { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background: radial-gradient(circle at top left, #2e1065, var(--bg-dark)); }
+
+/* Header */
+header { background: rgba(30, 41, 59, 0.8); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.logo { font-size: 20px; font-weight: bold; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; color: transparent; }
+.credit-badge { background: rgba(139, 92, 246, 0.2); border: 1px solid var(--primary); padding: 5px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #c4b5fd; }
+
+/* Tabs Management */
+.view-section { display: none; padding: 20px; }
+.view-section.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Cards & Inputs */
+.premium-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+h3 { margin-bottom: 10px; font-size: 18px; color: #e2e8f0; }
+h2 { margin-bottom: 15px; font-size: 22px; }
+p.subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 15px; }
+
+input, textarea, select { width: 100%; padding: 15px; margin-bottom: 15px; background: #0b1120; border: 1px solid #334155; color: white; border-radius: 10px; font-size: 15px; outline: none; transition: 0.3s; }
+input:focus, textarea:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); }
+
+button.btn-primary { width: 100%; padding: 15px; border: none; border-radius: 10px; background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; }
+button.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6); }
+
+button.btn-outline { width: 100%; padding: 12px; border: 1px solid var(--primary); border-radius: 10px; background: transparent; color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+/* Media Elements */
+video, audio { width: 100%; border-radius: 12px; margin-top: 15px; }
+img.gen-image { width: 100%; border-radius: 12px; margin-top: 15px; border: 1px solid var(--success); }
+.loader-text { display: none; color: var(--secondary); font-weight: bold; text-align: center; margin-top: 10px; }
+
+/* History Styles */
+#historyList { display: flex; flex-direction: column; gap: 12px; }
+.history-item {
+    background: rgba(255,255,255,0.05);
+    padding: 15px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: 0.2s;
+}
+.history-item:hover { border-color: var(--primary); background: rgba(255,255,255,0.08); }
+.history-icon { font-size: 24px; }
+.history-details { flex: 1; overflow: hidden; }
+.history-prompt { font-weight: bold; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
+.history-type { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+/* Bottom Nav */
+.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(15, 23, 42, 0.95); border-top: 1px solid #334155; display: flex; justify-content: space-around; padding: 10px 0 15px 0; z-index: 100; }
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: var(--text-muted); text-decoration: none; font-size: 18px; cursor: pointer; transition: 0.3s; }
+.nav-item.active { color: var(--primary); transform: translateY(-3px); }
+.nav-label { font-size: 10px; margin-top: 4px; }
+
+/* Footer */
+footer { margin-top: 40px; text-align: center; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; font-size: 13px; }
+footer b { color: #c4b5fd; }
+</style>
+</head>
+<body>
+
+<div id="loginPage">
+    <div class="premium-card" style="width: 90%; max-width: 400px; text-align: center;">
+        <h1 class="logo" style="font-size: 32px; margin-bottom: 15px;">AI Studio Pro</h1>
+        <input id="email" type="email" placeholder="Email Address">
+        <input id="pass" type="password" placeholder="Password">
+        <button class="btn-primary" onclick="login()">Login</button>
+        <button class="btn-outline" onclick="signup()" style="width:100%">Create Account</button>
+    </div>
+</div>
+
+<div id="appContainer">
+    <header>
+        <div class="logo">AI Studio Pro</div>
+        <div class="credit-badge">⭐ <span id="credits">0</span></div>
+    </header>
+
+    <div id="view-dashboard" class="view-section active">
+        <h2>Dashboard</h2>
+        <div class="premium-card">
+            <h3>Welcome!</h3>
+            <p class="subtitle" style="margin-top:10px;">Aapka AI Studio ready hai. Niche menu se Image, Video ya Voice banayein.</p>
+        </div>
+        <div class="premium-card" style="background: linear-gradient(45deg, #1e293b, #10b981);">
+            <p><b>Tip:</b> Image download karne ke liye "Save Image" dabayein aur naye page par photo ko long-press karein.</p>
+        </div>
+    </div>
+
+    <div id="view-image" class="view-section">
+        <h2>Image Studio</h2>
+        <div class="premium-card">
+            <textarea id="imgPrompt" rows="4" placeholder="Describe image..."></textarea>
+            <button class="btn-primary" onclick="generateImage()">🖼️ Generate Image</button>
+            <div id="imgLoader" class="loader-text">AI Artist is painting...</div>
+            <img id="genImage" class="gen-image" style="display:none;" />
+            <button id="downloadBtn" class="btn-outline" style="display:none; border-color: var(--success); color: var(--success);" onclick="downloadImage()">⬇️ Save Image</button>
+        </div>
+    </div>
+
+    <div id="view-video" class="view-section">
+        <h2>Video Studio</h2>
+        <div class="premium-card">
+            <textarea id="prompt" rows="4" placeholder="Describe video scene..."></textarea>
+            <button class="btn-primary" onclick="generateVideo()">🎥 Create Video</button>
+            <div id="loader" class="loader-text">Processing Video...</div>
+            <video id="video" controls style="display:none"></video>
+        </div>
+    </div>
+
+    <div id="view-voice" class="view-section">
+        <h2>Voice Studio</h2>
+        <div class="premium-card">
+            <textarea id="voiceInput" rows="5" placeholder="Type script here..."></textarea>
+            <select id="langSelect"><option value="hi">Hindi</option><option value="en">English</option></select>
+            <button class="btn-primary" onclick="prepareVoice()">🔊 Generate Voice</button>
+            <audio id="audioPlayer" controls style="display:none;"></audio>
+        </div>
+    </div>
+
+    <div id="view-history" class="view-section">
+        <h2>My History</h2>
+        <p class="subtitle">Aapke saare pichle creations yahan hain.</p>
+        <div id="historyList"></div>
+    </div>
+
+    <div id="view-account" class="view-section">
+        <h2>Account</h2>
+        <div class="premium-card" style="text-align: center;">
+            <p id="userEmailDisplay" style="font-weight:bold; margin-bottom:15px;"></p>
+            <button class="btn-outline" style="border-color: #ef4444; color: #ef4444; width:100%;" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2024 AI Studio Pro. All rights reserved.</p>
+        <p>Designed & Developed by <b>Sahil Dudhankar</b></p>
+    </footer>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('dashboard', this)">📊<div class="nav-label">Home</div></div>
+        <div class="nav-item" onclick="switchTab('image', this)">🖼️<div class="nav-label">Image</div></div>
+        <div class="nav-item" onclick="switchTab('video', this)">🎥<div class="nav-label">Video</div></div>
+        <div class="nav-item" onclick="switchTab('voice', this)">🎙️<div class="nav-label">Voice</div></div>
+        <div class="nav-item" onclick="switchTab('history', this)">📜<div class="nav-label">History</div></div>
+        <div class="nav-item" onclick="switchTab('account', this)">👤<div class="nav-label">Me</div></div>
+    </nav>
+</div>
+
+<script>
+// UI LOGIC
+function switchTab(tabId, element) {
+    document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+    document.getElementById('view-' + tabId).classList.add('active');
+    if(element) element.classList.add('active');
+    if(tabId === 'history') loadHistory();
+}
+
+// FIREBASE
+const firebaseConfig = { apiKey: "AIzaSyAKTaAd3_r-4g0JtztZpwSKmdDp1X1u354", authDomain: "ai-app-f58a6.firebaseapp.com", projectId: "ai-app-f58a6" };
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+let user;
+
+function signup() { auth.createUserWithEmailAndPassword(email.value, pass.value).then(() => alert("Signup Success")).catch(e => alert(e.message)); }
+function login() { auth.signInWithEmailAndPassword(email.value, pass.value).then(() => alert("Login Success")).catch(e => alert(e.message)); }
+function logout() { auth.signOut(); }
+
+auth.onAuthStateChanged(u => {
+    if(u) {
+        user = u;
+        loginPage.style.display="none"; appContainer.style.display="block";
+        userEmailDisplay.innerText = u.email;
+        loadData();
+    } else {
+        loginPage.style.display="flex"; appContainer.style.display="none";
+    }
+});
+
+// LOAD DATA
+async function loadData() {
+    let ref = db.collection("users").doc(user.uid);
+    let doc = await ref.get();
+    if(!doc.exists) {
+        await ref.set({credits: 5, lastReset: new Date().toDateString()});
+        document.getElementById("credits").innerText = 5;
+    } else {
+        let data = doc.data();
+        let today = new Date().toDateString();
+        if(data.lastReset !== today) {
+            await ref.update({credits: 5, lastReset: today});
+            document.getElementById("credits").innerText = 5;
+        } else {
+            document.getElementById("credits").innerText = data.credits;
+        }
+    }
+}
+
+// SAVE TO DB
+async function saveToHistory(type, prompt, url) {
+    if(!user) return;
+    try {
+        let newEntry = {
+            type: type,
+            prompt: prompt,
+            resultUrl: url,
+            time: Date.now()
+        };
+        await db.collection("users").doc(user.uid).update({
+            historyArray: firebase.firestore.FieldValue.arrayUnion(newEntry)
+        });
+    } catch (e) { console.error("History saving error:", e); }
+}
+
+// IMAGE GENERATOR
+async function generateImage() {
+    let text = imgPrompt.value;
+    if(!text) return alert("Prompt empty!");
+    imgLoader.style.display="block"; genImage.style.display="none"; downloadBtn.style.display="none";
+    
+    let finalUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?nologo=true&seed=${Date.now()}`;
+    genImage.src = finalUrl;
+    genImage.onload = () => {
+        imgLoader.style.display="none"; genImage.style.display="block"; downloadBtn.style.display="block";
+        saveToHistory('image', text, finalUrl);
+    };
+}
+
+function downloadImage() {
+    window.open(genImage.src, '_blank');
+}
+
+// VIDEO GENERATOR
+async function generateVideo(){
+  let text = document.getElementById("prompt").value;
+  if(!text) return;
+  loader.style.display = "block";
+  try {
+    let res = await fetch("https://ai-backend-1-nvbc.onrender.com/generate",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({prompt:text}) });
+    let gen = await res.json();
+    let id = gen.id;
+    for(let i=0;i<30;i++){
+      await new Promise(r=>setTimeout(r,4000));
+      let check = await fetch(`https://ai-backend-1-nvbc.onrender.com/status/${id}`);
+      let result = await check.json();
+      if(result.status === "succeeded"){
+        let url = Array.isArray(result.output) ? result.output[0] : result.output;
+        video.src = url; video.style.display = "block"; loader.style.display = "none";
+        saveToHistory('video', text, url);
+        return;
+      }
+    }
+  } catch(e) { loader.style.display = "none"; }
+}
+
+// VOICE
+let audioQueue = [];
+function prepareVoice() {
+    let text = voiceInput.value;
+    let lang = langSelect.value;
+    if (!text) return;
+    let chunks = text.match(/.{1,150}(\s|$)|.{1,150}/g); 
+    audioQueue = chunks.map(chunk => `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${lang}&q=${encodeURIComponent(chunk.trim())}`);
+    audioPlayer.style.display = "block";
+    playNextChunk(); 
+}
+function playNextChunk() {
+    if (audioQueue.length === 0) return; 
+    audioPlayer.src = audioQueue.shift(); 
+    audioPlayer.load(); audioPlayer.play();
+    audioPlayer.onended = playNextChunk;
+}
+
+// SMART LOAD HISTORY
+async function loadHistory() {
+    let list = document.getElementById("historyList");
+    list.innerHTML = '<p style="text-align:center; color:var(--text-muted);">Fetching history...</p>';
+    
+    try {
+        let doc = await db.collection("users").doc(user.uid).get();
+        let data = doc.data();
+        
+        list.innerHTML = ""; 
+        
+        if(!data.historyArray || data.historyArray.length === 0) { 
+            list.innerHTML = '<p style="text-align:center; color:var(--text-muted);">No history yet.</p>'; 
+            return; 
+        }
+        
+        let historyArray = data.historyArray.sort((a, b) => b.time - a.time);
+        
+        historyArray.forEach(item => {
+            let div = document.createElement("div");
+            div.className = "history-item";
+            
+            let icon = item.type === 'image' ? '🖼️' : '🎥';
+            
+            div.innerHTML = `
+                <div class="history-icon">${icon}</div>
+                <div class="history-details">
+                    <div class="history-prompt">${item.prompt}</div>
+                    <div class="history-type">${item.type}</div>
+                </div>
+            `;
+            
+            div.onclick = () => {
+                if(item.type === 'image') {
+                    switchTab('image', document.querySelectorAll('.nav-item')[1]);
+                    document.getElementById('imgPrompt').value = item.prompt;
+                    document.getElementById('genImage').src = item.resultUrl;
+                    document.getElementById('genImage').style.display = "block";
+                    document.getElementById('downloadBtn').style.display = "block";
+                } else {
+                    switchTab('video', document.querySelectorAll('.nav-item')[2]);
+                    document.getElementById("prompt").value = item.prompt;
+                    document.getElementById('video').src = item.resultUrl;
+                    document.getElementById('video').style.display = "block";
+                }
+            };
+            list.appendChild(div);
+        });
+    } catch (e) { 
+        list.innerHTML = `<p style="text-align:center; color:#ef4444;">Error: ${e.message}</p>`; 
+    }
+}
+</script>
+</body>
+</html>
